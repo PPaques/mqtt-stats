@@ -208,40 +208,40 @@ def on_connect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 # updates metrics for later GUI display
 def on_message(client, userdata, msg):
-    if main.clear_stats:
-	main.messages_received = 0
-	main.num_topics = 0
-	main.topics = dict()
-	main.changed = dict()		# a small subset of topics that is changed
-	main.last_changed = dict()	# the changed in the last iteration
-					# GUI needs this to 0 out some values
-	main.clear_stats = False
-	main.clear_store = True
+	if main.clear_stats:
+		main.messages_received = 0
+		main.num_topics = 0
+		main.topics = dict()
+		main.changed = dict()		# a small subset of topics that is changed
+		main.last_changed = dict()	# the changed in the last iteration
+						# GUI needs this to 0 out some values
+		main.clear_stats = False
+		main.clear_store = True
 
-    bytes = len (msg.payload)
-    now = time.time()
+	bytes = len (msg.payload)
+	now = time.time()
 
 #    logging.debug (msg.topic + ' ' + str(bytes) + ' ' + str(msg.payload))
 
-    main.messages_received += 1
+	main.messages_received += 1
 
-    # if not already there, add to set of topics detected
-    if msg.topic not in main.topics:
-    	main.num_topics += 1
-	newtopic = Topic(main.num_topics, msg.topic, bytes, now, msg.payload, None)
-	main.topics[msg.topic] = newtopic
-	thistopic = newtopic
-    else:
-    	existingtopic = main.topics[msg.topic]
+	# if not already there, add to set of topics detected
+	if msg.topic not in main.topics:
+		main.num_topics += 1
+		newtopic = Topic(main.num_topics, msg.topic, bytes, now, msg.payload, None)
+		main.topics[msg.topic] = newtopic
+		thistopic = newtopic
+	else:
+		existingtopic = main.topics[msg.topic]
 	existingtopic.count += 1
 	existingtopic.bytes += bytes
 	existingtopic.last_time = now
 	existingtopic.last_payload = msg.payload
 	thistopic = existingtopic
 
-    if thistopic.number not in main.changed:
-	main.changed[thistopic.number] = msg.topic
-    return
+	if thistopic.number not in main.changed:
+		main.changed[thistopic.number] = msg.topic
+	return
 
 
 # reconnect and re-subscribe
@@ -462,7 +462,7 @@ class MyApp:
 		self.topicstore = self.builder.get_object("topicstore")
 
 		self.treefilter = self.builder.get_object("treemodelfilter1")
-		self.treefilter.set_visible_func(self.filter_func, data=None)
+		# self.treefilter.set_visible_func(self.filter_func, data=None)
 
 		treeview = self.builder.get_object("treeview1")
 		self.treeview = treeview
@@ -575,71 +575,71 @@ class MyApp:
 		main.changed = dict()
 		numbers = set (changed.keys()) | set(last_changed.keys())
 		for number in numbers:
-		    key = changed.get(number, last_changed.get(number, None))
-		    if key == None:
-		    	logging.error ('number ' + str(number) + ' not in changed or last_changed')
-			continue
+			key = changed.get(number, last_changed.get(number, None))
+			if key == None:
+				logging.error ('number ' + str(number) + ' not in changed or last_changed')
+				continue
 
-		    topic =  main.topics[key]
+			topic =  main.topics[key]
 
-		    if topic.rowref == None:
+			if topic.rowref == None:
 
-			# UTF-8 encodings
-			try:
-				payloadstr = topic.last_payload.decode('utf-8')
-				#    logging.debug ("payload is UTF-8 " + payloadstr)
-			except UnicodeError:
-				payloadstr = "0x" + binascii.hexlify (topic.last_payload)
-				# logging.debug ("UnicodeError: payload is not UTF-8 " + topic.last_payload + " >> " + payloadstr)
-
-			try:
-			    topicstr = topic.topic.decode('utf-8')
-			#    logging.debug ("topic is UTF-8 " + topicstr)
-			except UnicodeError:
-			    topicstr = topic.topic
-			    # UWE: still get this error
-			    # Pango-WARNING **: Invalid UTF-8 string passed to pango_layout_set_text()
-			    # but we don't want the hex string for topic as we
-			    # do for payload
-			    # happens much less frequently for topic
-
-			msgpersec = topic.count / (self.now - self.last_time)
-
-			rowref = main.topicstore.append(
-				[
-				topic.number,
-				topicstr,
-				topic.count,
-				msgpersec,
-				topic.bytes,
-				time.ctime (topic.last_time),
-				payloadstr
-				])
-
-			topic.rowref = rowref
-			active_topics += 1
-			updated_entries += 1
-		    else:
-		    	# redisplay only if new messages for topic
-			displayedcount = main.topicstore.get_value (topic.rowref, 2)
-			msgpersec = int((topic.count - displayedcount) / (self.now - self.last_time))
-			displayedmsgpersec = main.topicstore.get_value (topic.rowref, 3)
-			do_display = True
-			if topic.count != displayedcount:
-				active_topics += 1
-			else:
-				if msgpersec != displayedmsgpersec:
-					do_display = True
-
-			if do_display:
-				updated_entries += 1
+				# UTF-8 encodings
 				try:
 					payloadstr = topic.last_payload.decode('utf-8')
 					#    logging.debug ("payload is UTF-8 " + payloadstr)
 				except UnicodeError:
 					payloadstr = "0x" + binascii.hexlify (topic.last_payload)
 					# logging.debug ("UnicodeError: payload is not UTF-8 " + topic.last_payload + " >> " + payloadstr)
-				main.topicstore.set (topic.rowref, 2, topic.count, 3, msgpersec, 4, topic.bytes, 5, time.ctime (topic.last_time), 6, payloadstr)
+
+				try:
+					topicstr = topic.topic
+				#    logging.debug ("topic is UTF-8 " + topicstr)
+				except UnicodeError:
+					topicstr = topic.topic
+					# UWE: still get this error
+					# Pango-WARNING **: Invalid UTF-8 string passed to pango_layout_set_text()
+					# but we don't want the hex string for topic as we
+					# do for payload
+					# happens much less frequently for topic
+
+				msgpersec = topic.count / (self.now - self.last_time)
+
+				rowref = main.topicstore.append(
+					[
+					topic.number,
+					topicstr,
+					topic.count,
+					msgpersec,
+					topic.bytes,
+					time.ctime (topic.last_time),
+					payloadstr
+					])
+
+				topic.rowref = rowref
+				active_topics += 1
+				updated_entries += 1
+			else:
+					# redisplay only if new messages for topic
+				displayedcount = main.topicstore.get_value (topic.rowref, 2)
+				msgpersec = int((topic.count - displayedcount) / (self.now - self.last_time))
+				displayedmsgpersec = main.topicstore.get_value (topic.rowref, 3)
+				do_display = True
+				if topic.count != displayedcount:
+					active_topics += 1
+				else:
+					if msgpersec != displayedmsgpersec:
+						do_display = True
+
+				if do_display:
+					updated_entries += 1
+					try:
+						payloadstr = topic.last_payload.decode('utf-8')
+						#    logging.debug ("payload is UTF-8 " + payloadstr)
+					except UnicodeError:
+						payloadstr = "0x" + binascii.hexlify (topic.last_payload)
+						# logging.debug ("UnicodeError: payload is not UTF-8 " + topic.last_payload + " >> " + payloadstr)
+					main.topicstore.set (topic.rowref, 2, topic.count, 3, msgpersec, 4, topic.bytes, 5, time.ctime (topic.last_time), 6, payloadstr)
 
 
 		logging.debug ("updated entries " + str(updated_entries))
@@ -659,9 +659,9 @@ class MyApp:
 		print ("Number Topic                Messages Bytes Last payload", file=outfile)
 		keys = self.topics.keys()
 		for key in keys:
-		    topic =  self.topics[key]
+			topic =  self.topics[key]
 
-		    topic.dump(outfile)
+			topic.dump(outfile)
 
 		outfile.close()
 		print ("dumped to dump.lst")
