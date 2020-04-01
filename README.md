@@ -25,7 +25,17 @@ This python package requires
 
 Example usage:
 
+```
 ./mqtt-stats.py --host iot.eclipse.org --topic '#' --qos 2
+```
+
+Example with pipenv:
+
+```
+pip install pipenv
+pipenv install
+pipenv run pyton mqtt-stats.py --host iot.eclipse.org --topic '#' --qos 2
+```
 
 ![screenshot](https://github.com/gambitcomminc/mqtt-stats/blob/master/mqtt-stats4.png)
 
